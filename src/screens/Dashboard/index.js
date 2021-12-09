@@ -25,6 +25,7 @@ const Dashboard = () => {
   const [ModalVisibility, setModalVisibility] = useState(false);
   const [purpose, setPurpose] = useState('Select Purpose');
   const [b, setB] = useState(true);
+  const [ermsg, setErmsg] = useState('Loading ...');
   const openModal = () => {
     setModalVisibility(true);
   };
@@ -62,11 +63,11 @@ const Dashboard = () => {
         );
         setEarn(data.balance_details.available_balance_in_paisa / 100);
         setWidthdraw(data.balance_details.max_allowed_in_paisa / 100);
+        setLoading(false);
       }
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
+      setErmsg('Check Internet / Try again later');
     }
   };
 
@@ -92,6 +93,23 @@ const Dashboard = () => {
       <View style={{position: 'absolute', bottom: 0, width: WIDTH}}>
         <BottomNav />
       </View>
+      <Modal visible={loading} dismissable={false}>
+        <View
+          style={{
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <Text
+            style={{
+              padding: 20,
+              backgroundColor: 'white',
+              color: 'black',
+              borderRadius: 8,
+            }}>
+            {ermsg}
+          </Text>
+        </View>
+      </Modal>
       <Modal
         visible={ModalVisibility}
         onDismiss={() => {
