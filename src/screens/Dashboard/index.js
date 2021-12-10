@@ -63,7 +63,7 @@ const Dashboard = () => {
   const onRefresh = React.useCallback(() => {
     setRefresh(true);
     setPurpose('Select Purpose');
-    getData();
+    wait(200).then(() => setRefresh(false));
   }, []);
 
   const getData = async () => {
