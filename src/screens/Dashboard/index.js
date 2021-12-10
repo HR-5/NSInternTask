@@ -8,6 +8,7 @@ import {
   StatusBar,
   Text,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import BottomNav from './BottomNav';
 import TopLayout from './TopLayout';
@@ -26,15 +27,19 @@ const Dashboard = () => {
   const [purpose, setPurpose] = useState('Select Purpose');
   const [b, setB] = useState(true);
   const [ermsg, setErmsg] = useState('Loading ...');
+  const [refresh, setRefresh] = useState(false);
+
   const openModal = () => {
     setModalVisibility(true);
   };
-  const updateTrans = data => {
+  const updateTrans = (data, balance) => {
     var trans = Trans;
     trans.unshift(data);
     setTrans(trans);
     setB(!b);
+    setWidthdraw(balance);
   };
+
   const HeaderComponent = () => {
     return (
       <View>
@@ -45,10 +50,21 @@ const Dashboard = () => {
           purpose={purpose}
           modal={openModal}
           update={updateTrans}
+          refresh={refresh}
         />
       </View>
     );
   };
+
+  const wait = timeout => {
+    return new Promise(resolve => setTimeout(resolve, timeout));
+  };
+
+  const onRefresh = React.useCallback(() => {
+    setRefresh(true);
+    setPurpose('Select Purpose');
+    getData();
+  }, []);
 
   const getData = async () => {
     try {
@@ -61,9 +77,11 @@ const Dashboard = () => {
         setName(
           data.first_name + ' ' + data.middle_name + ' ' + data.last_name,
         );
+        var withD = data.balance_details.max_allowed_in_paisa / 100;
         setEarn(data.balance_details.available_balance_in_paisa / 100);
-        setWidthdraw(data.balance_details.max_allowed_in_paisa / 100);
+        setWidthdraw(withD);
         setLoading(false);
+        setRefresh(false);
       }
     } catch (error) {
       console.error(error);
@@ -79,6 +97,13 @@ const Dashboard = () => {
     <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
       <StatusBar backgroundColor={color.Primary} barStyle="light-content" />
       <FlatList
+        refreshControl={
+          <RefreshControl
+            colors={[color.Tertiary, color.Primary]}
+            refreshing={refresh}
+            onRefresh={onRefresh}
+          />
+        }
         data={Trans}
         ListHeaderComponent={HeaderComponent}
         extraData={b}

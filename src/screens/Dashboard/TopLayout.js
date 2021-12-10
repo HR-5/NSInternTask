@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import MultiSlider from '@ptomasroos/react-native-multi-slider';
 import * as color from '../../utils/colors';
 const sliderLength = Dimensions.get('screen').width - 40;
 
-const TopLayout = ({name, earn, withdraw, purpose, modal, update}) => {
+const TopLayout = ({name, earn, withdraw, purpose, modal, update, refresh}) => {
   const [amount, setAmount] = useState('\u20B9' + '0');
   const [sliderOneValue, setSliderOneValue] = useState([0]);
   const [err, setErr] = useState(false);
@@ -22,14 +22,21 @@ const TopLayout = ({name, earn, withdraw, purpose, modal, update}) => {
 
   const sliderOneValuesChange = values => {
     setSliderOneValue(values);
-    var val = '\u20B9' + values[0].toFixed(2);
+    var val = '\u20B9' + values[0];
     setDisable(true);
-    if (val != '\u20B9' + '0.00') {
+    if (values[0] >= 500) {
       setDisable(false);
     }
     setAmount(val);
     setErr(false);
   };
+
+  useEffect(() => {
+    if (refresh) {
+      setAmount('\u20B9' + '0');
+      setSliderOneValue([0]);
+    }
+  }, [refresh]);
 
   const withdrawApi = () => {
     if (purpose == 'Select Purpose') {
@@ -39,22 +46,23 @@ const TopLayout = ({name, earn, withdraw, purpose, modal, update}) => {
     var now = new Date().toString().split(' ');
     var date = now[2] + ' ' + now[1] + ',' + now[3] + ' ' + now[4];
     setP(true);
+    var balance = withdraw - parseInt(amount.substring(1));
     const trans = {
       purpose: purpose,
       withdrawn: amount.substring(1),
       status: 'Success',
       timestamp: date,
     };
-    update(trans);
+    update(trans, balance);
   };
 
   const fixAmt = per => {
-    var amt = (withdraw * per) / 100;
-    var val = '\u20B9' + amt.toFixed(2);
+    var amt = Math.floor((withdraw * per) / 100);
+    var val = '\u20B9' + amt;
     setAmount(val);
     setErr(false);
     setDisable(true);
-    if (val != '\u20B9' + '0.00') {
+    if (amt >= 500) {
       setDisable(false);
     }
     setSliderOneValue([amt]);
@@ -99,25 +107,26 @@ const TopLayout = ({name, earn, withdraw, purpose, modal, update}) => {
           }}
           label={'Enter Amount (' + '\u20B9' + ')'}
           outlineColor="black"
-          keyboardType="numeric"
+          keyboardType="phone-pad"
           style={{backgroundColor: 'white', marginTop: 5}}
           value={amount}
           error={err}
           onChangeText={amt => {
             setDisable(true);
             if (amt[0] != '\u20B9') amt = '\u20B9' + amt;
-            setAmount(amt);
             if (amt.length <= 1) {
+              setAmount('\u20B9');
               return;
             }
             var pay = amt.substring(1);
             var val = [];
-            val[0] = parseInt(pay);
-            if (val[0] > withdraw) {
+            val[0] = Math.floor(parseInt(pay));
+            setAmount('\u20B9' + val[0]);
+            if (val[0] === NaN || val[0] > withdraw) {
               setErr(true);
               return;
             }
-            if (val[0] != 0) {
+            if (val[0] >= 500) {
               setDisable(false);
             }
             setErr(false);
@@ -134,7 +143,7 @@ const TopLayout = ({name, earn, withdraw, purpose, modal, update}) => {
             sliderLength={sliderLength}
             min={0}
             max={withdraw != 0 ? withdraw : 10}
-            step={0.1}
+            step={1}
             onValuesChange={sliderOneValuesChange}
             style={{marginTop: 10}}
           />
